@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: nav-dashboard-new
+    runtime: node
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /login
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DISABLE_NAV_LEDGER
+        value: "true"
+      - key: DISABLE_AUTO_SYNC
+        value: "true"
+      - key: APP_DATA_DIR
+        value: /var/data
+    disk:
+      name: nav-dashboard-data
+      mountPath: /var/data
+      sizeGB: 10
