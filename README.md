@@ -58,6 +58,10 @@ This installs:
 
 ### Step 4 — Start the Server
 
+`npm start` and `npm run dev` import the included fund workbook into SQLite
+only when the database is empty. Existing database records and admin edits are
+left untouched.
+
 **Production / Normal start:**
 ```bash
 npm start

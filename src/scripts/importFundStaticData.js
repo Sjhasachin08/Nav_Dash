@@ -3,7 +3,16 @@ const path = require('path');
 const XLSX = require('xlsx');
 const store = require('../services/staticFundDataStore');
 
-const workbookPath = process.argv[2] || 'C:/Users/ss/Desktop/Data Centre/Report AS ON 18-Aug-2026.xlsx';
+const args = process.argv.slice(2);
+const onlyIfEmpty = args.includes('--if-empty');
+const workbookPath = args.find(arg => arg !== '--if-empty')
+  || path.join(__dirname, '../../Static_Fund_Data_Merged_With_Launch_Dates_VERIFIED_2026-10-02.xlsx');
+
+if (onlyIfEmpty && store.listAll().length > 0) {
+  console.log('Static fund database already has records; keeping existing data.');
+  process.exit(0);
+}
+
 const workbook = XLSX.readFile(workbookPath);
 const skip = new Set(['Home', 'Graph Data', 'NFOs', 'Disclaimer']);
 const clean = value => String(value ?? '').trim();
@@ -81,4 +90,4 @@ for (const sheetName of workbook.SheetNames) {
     }
   }
 }
-console.log(`Imported ${imported} static fund records into ${path.relative(process.cwd(), path.join(__dirname, '../../data/fund-static-data.sqlite'))}.`);
+console.log(`Imported ${imported} static fund records.`);
