@@ -81,25 +81,29 @@ db.exec(`
   }
 })();
 
-// Last-resort safety net: if the table is STILL empty after the migration
-// above (e.g. this is a fresh copy of the project and users.sqlite,
-// users.json AND users.json.bak were all left behind when it was zipped —
-// dotfile-ish/hidden-looking files are easy to miss), seed the same
-// default admin + user account the README documents, instead of silently
-// booting with zero logins. Printed loudly so it's obvious this happened.
-(function seedDefaultAccountsIfEmpty() {
+// A fresh production database gets one admin whose password comes from a
+// host-provided secret. Local development retains the documented test users.
+(function seedInitialAccountsIfEmpty() {
   const existing = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
   if (existing > 0) return;
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD;
+  if (isProduction && !initialAdminPassword) {
+    throw new Error('INITIAL_ADMIN_PASSWORD must be configured before creating production accounts.');
+  }
 
   const seedInsert = db.prepare(`
     INSERT INTO users (id, username, password_hash, role, created_at)
     VALUES (@id, @username, @passwordHash, @role, @createdAt)
   `);
   const now = new Date().toISOString();
-  const defaults = [
-    { id: 'u-001', username: 'admin', password: 'admin123', role: 'admin' },
-    { id: 'u-002', username: 'user', password: 'user123', role: 'user' }
-  ];
+  const defaults = isProduction
+    ? [{ id: 'u-001', username: 'admin', password: initialAdminPassword, role: 'admin' }]
+    : [
+        { id: 'u-001', username: 'admin', password: 'admin123', role: 'admin' },
+        { id: 'u-002', username: 'user', password: 'user123', role: 'user' }
+      ];
   const insertAll = db.transaction((rows) => {
     for (const u of rows) {
       seedInsert.run({
@@ -111,12 +115,14 @@ db.exec(`
   });
   insertAll(defaults);
 
-  console.warn('\n⚠️  [usersStore] No user accounts found — this looks like a fresh copy of the');
-  console.warn('   project (users.sqlite / users.json were not carried over). Created the');
-  console.warn('   default accounts so login works right away:');
-  console.warn('     admin / admin123   (role: admin)');
-  console.warn('     user  / user123    (role: user)');
-  console.warn('   Change these passwords from the Admin Console once you log in.\n');
+  if (isProduction) {
+    console.warn('[usersStore] Created the initial admin account; its password is the INITIAL_ADMIN_PASSWORD secret.');
+  } else {
+    console.warn('\n⚠️  [usersStore] No user accounts found. Created local development accounts:');
+    console.warn('     admin / admin123   (role: admin)');
+    console.warn('     user  / user123    (role: user)');
+    console.warn('   Change these passwords from the Admin Console once you log in.\n');
+  }
 })();
 
 function rowToUser(row) {

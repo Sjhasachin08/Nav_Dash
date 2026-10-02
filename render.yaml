@@ -11,6 +11,8 @@ services:
         value: production
       - key: SESSION_SECRET
         generateValue: true
+      - key: INITIAL_ADMIN_PASSWORD
+        generateValue: true
       - key: TRUST_PROXY
         value: "1"
       - key: DISABLE_NAV_LEDGER

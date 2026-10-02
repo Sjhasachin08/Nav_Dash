@@ -166,12 +166,17 @@ The dashboard now requires login. Two roles exist:
 | **Admin** | ✅ | ✅ | ✅ |
 | **User**  | ✅ | ❌ (view-only) | ❌ |
 
-### Default accounts (change these after first login!)
+### Local development accounts
 
 | Username | Password | Role |
 |----------|----------|------|
 | `admin`  | `admin123` | Admin |
 | `user`   | `user123`  | User |
+
+These test accounts are created only for local development. Render creates
+only an `admin` account and uses its generated `INITIAL_ADMIN_PASSWORD`
+environment secret; retrieve it from the Render service settings, then change
+it after logging in. Never publish that value.
 
 ### How it works
 - `/login` — sign-in page for everyone.
@@ -266,8 +271,9 @@ Health Check Path: /login
 
 Render generates `SESSION_SECRET` and trusts its reverse proxy. The local
 `.env`, `data/users.sqlite`, and session file are intentionally not included in
-the public Git repository. A fresh deployment therefore creates the documented
-default accounts; change those passwords immediately in the Admin Console.
+the public Git repository. A fresh deployment creates its admin from the
+Render-generated secret; a fresh local development copy gets the documented
+test accounts.
 To keep existing local accounts on the hosted service, transfer `users.sqlite`
 to the persistent disk through a private channel before relying on the new
 accounts. Never commit the database, session file, or `.env` to a public repo.
